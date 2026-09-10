@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/compile",
-      "destination": "https://nizam-compiler-service.a.run.app/compile"
+      "destination": "https://compiler-service-uve5.onrender.com/compile"
     }
   ],
   "headers": [
