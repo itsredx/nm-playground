@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nizam WebAssembly Studio | Self-Hosted WASM Runtime</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <div class="background-glow glow-1"></div>
+  <div class="background-glow glow-2"></div>
+  <div class="background-glow glow-3"></div>
+
+  <!-- Header Section -->
+  <header class="studio-header">
+    <div class="brand-group">
+      <div class="brand-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L2 9L16 16L30 9L16 2Z" fill="url(#logo-grad-1)"/>
+          <path d="M2 23L16 30L30 23V16L16 23L2 16V23Z" fill="url(#logo-grad-2)"/>
+          <defs>
+            <linearGradient id="logo-grad-1" x1="2" y1="2" x2="30" y2="16" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00f0ff"/>
+              <stop offset="1" stop-color="#7000ff"/>
+            </linearGradient>
+            <linearGradient id="logo-grad-2" x1="2" y1="16" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00e676"/>
+              <stop offset="1" stop-color="#00b0ff"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">NIZAM & MANTIQ <span class="brand-accent">STUDIO</span></h1>
+        <span class="brand-subtitle">WebAssembly Dual-Language Runtime</span>
+      </div>
+      <div class="status-badge target-badge">
+        <span class="badge-dot"></span>
+        <span class="badge-label">wasm32-wasi</span>
+        <span class="badge-sub">32-bit Linear Memory</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="status-badge runtime-ready">
+        <span class="pulse-indicator"></span>
+        <span id="runtime-status-text">WASI VM Ready</span>
+      </div>
+      <a href="https://github.com" target="_blank" class="icon-link" title="Documentation">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Control Toolbar -->
+  <nav class="studio-toolbar">
+    <div class="toolbar-left">
+      <div class="lang-pill-group" title="Select Primary Language Mode">
+        <button class="lang-pill active-nz" id="pill-nz" data-lang="nizam">
+          <span>⚡</span>
+          <span>Nizam (.nz)</span>
+        </button>
+        <button class="lang-pill" id="pill-mq" data-lang="mantiq">
+          <span>✨</span>
+          <span>Mantiq (.mq)</span>
+        </button>
+      </div>
+
+      <label for="example-select" class="toolbar-label">Demo Module:</label>
+      <div class="select-wrapper">
+        <select id="example-select" class="glass-select">
+          <optgroup label="⚡ Nizam (.nz) Demos" id="optgroup-nz">
+            <option value="hello">1. Hello WASI (test_wasm_hello.nz)</option>
+            <option value="abi">2. ABI & Struct Layout (test_wasm_abi.nz)</option>
+            <option value="features">3. Core Features & Recursion (test_wasm_features.nz)</option>
+            <option value="collections">4. Dynamic Collections (test_wasm_collections.nz)</option>
+            <option value="concurrency">5. Concurrency & Channels (test_wasm_concurrency.nz)</option>
+            <option value="custom">6. Custom Code (Live Compiler)</option>
+            <option value="diagnostics">7. Diagnostics & Error Box (Catppuccin)</option>
+          </optgroup>
+          <optgroup label="✨ Mantiq (.mq) Demos" id="optgroup-mq">
+            <option value="classes">8. Classes & OOP Interfaces (test_wasm_classes.mq)</option>
+            <option value="closures">9. Closures & Lambdas (test_wasm_closures.mq)</option>
+            <option value="fstrings">10. String Interpolation (test_wasm_fstrings.mq)</option>
+            <option value="comprehensions">11. List Comprehensions (test_wasm_comprehensions.mq)</option>
+            <option value="mantiq_async">12. Mantiq Actor Concurrency (test_wasm_mantiq_async.mq)</option>
+          </optgroup>
+        </select>
+        <span class="select-arrow">▼</span>
+      </div>
+
+      <button id="btn-run" class="btn btn-primary" title="Execute current WASM binary (Ctrl+Enter)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <span>Run in Browser</span>
+        <kbd>Ctrl+↵</kbd>
+      </button>
+
+      <button id="btn-compile-run" class="btn btn-secondary" title="Compile with self-hosted nizam.wasm and run in browser">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+        <span>Compile & Run</span>
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <button id="btn-download-wasm" class="btn btn-glass" title="Download compiled .wasm file">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        <span>.wasm</span>
+      </button>
+
+      <button id="btn-clear-term" class="btn btn-glass" title="Clear terminal output">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+        <span>Clear</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Workspace Container -->
+  <main class="studio-workspace">
+    <!-- Left Pane: Code Editor & IR -->
+    <section class="panel editor-panel">
+      <div class="panel-tabs">
+        <button class="tab-btn active" data-tab="code">
+          <span class="tab-icon">📄</span>
+          <span id="tab-filename">Source Code (test_wasm_hello.nz)</span>
+        </button>
+        <button class="tab-btn" data-tab="ir">
+          <span class="tab-icon">⚡</span>
+          <span>LLVM IR Preview</span>
+        </button>
+        <button class="tab-btn" data-tab="wasi-info">
+          <span class="tab-icon">🌐</span>
+          <span>WASI Syscall Specs</span>
+        </button>
+        <div class="tab-meta" id="code-size-meta">-- lines</div>
+      </div>
+
+      <div class="panel-content">
+        <!-- Code Tab -->
+        <div id="tab-code-view" class="tab-view active">
+          <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            <div class="editor-stage">
+              <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"><code id="highlighting-content"></code></pre>
+              <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="Write code here..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- IR Tab -->
+        <div id="tab-ir-view" class="tab-view">
+          <pre id="ir-preview" class="ir-preview"><code id="ir-content">; Select a program to inspect target LLVM IR</code></pre>
+        </div>
+
+        <!-- WASI Info Tab -->
+        <div id="tab-wasi-info-view" class="tab-view wasi-docs">
+          <div class="doc-card">
+            <h3>WASI Snapshot Preview 1 in Browser</h3>
+            <p>The Nizam compiler generates native WebAssembly targetting <code>wasm32-unknown-wasi</code>. The in-browser execution engine shims the POSIX-compatible system call layer:</p>
+            <ul>
+              <li><strong>fd_write(fd, iovs, len, nwritten)</strong>: Intercepts stdout (fd 1) and stderr (fd 2), streaming UTF-8 bytes into the reactive terminal.</li>
+              <li><strong>args_get / args_sizes_get</strong>: Supplies command line arguments directly into 32-bit linear memory.</li>
+              <li><strong>clock_time_get(id, prec, time_ptr)</strong>: Connects to high-precision <code>performance.now()</code>.</li>
+              <li><strong>random_get(buf, len)</strong>: Cryptographically secure random bytes via browser <code>crypto.getRandomValues</code>.</li>
+              <li><strong>proc_exit(code)</strong>: Captures exit codes safely without crashing the tab.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Pane: Terminal & Linear Memory Inspector -->
+    <section class="panel terminal-panel">
+      <div class="panel-tabs">
+        <button class="tab-btn active" data-tab="terminal">
+          <span class="tab-icon">💻</span>
+          <span>WASI Terminal</span>
+          <span id="terminal-badge" class="term-badge">Ready</span>
+        </button>
+        <button class="tab-btn" data-tab="memory">
+          <span class="tab-icon">🧠</span>
+          <span>Linear Memory Hex</span>
+        </button>
+        <button class="tab-btn" data-tab="metrics">
+          <span class="tab-icon">📊</span>
+          <span>Telemetry & Stats</span>
+        </button>
+      </div>
+
+      <div class="panel-content">
+        <!-- Terminal Tab -->
+        <div id="tab-terminal-view" class="tab-view active">
+          <div id="terminal-output" class="terminal-output">
+            <div class="terminal-line system-line">
+              <span class="term-timestamp">[00:00:00]</span>
+              <span class="term-sys">Nizam WebAssembly WASI Studio initialized.</span>
+            </div>
+            <div class="terminal-line system-line">
+              <span class="term-timestamp">[00:00:00]</span>
+              <span class="term-info">Target: wasm32-wasi | Runtime: In-Browser Pure JS WASI Preview 1</span>
+            </div>
+            <div class="terminal-line prompt-line">
+              <span class="term-prompt">nizam-wasi$</span>
+              <span class="term-cmd">Ready for execution. Select a demo and click "Run in Browser".</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linear Memory Hex Tab -->
+        <div id="tab-memory-view" class="tab-view">
+          <div class="memory-controls">
+            <label>Memory Page: </label>
+            <select id="mem-page-select" class="glass-select small-select">
+              <option value="0">Page 0 (0x0000 - 0xFFFF: Data & Stack)</option>
+              <option value="1">Page 1 (0x10000 - 0x1FFFF: Heap)</option>
+              <option value="2">Page 2 (0x20000 - 0x2FFFF: Heap)</option>
+            </select>
+            <button id="btn-refresh-mem" class="btn btn-small">Refresh View</button>
+          </div>
+          <div class="hex-viewer" id="hex-viewer">
+            <div class="hex-placeholder">Run a WASM program to inspect live 32-bit linear memory bytes.</div>
+          </div>
+        </div>
+
+        <!-- Metrics Tab -->
+        <div id="tab-metrics-view" class="tab-view metrics-view">
+          <div class="stat-card">
+            <span class="stat-label">Execution Time</span>
+            <span class="stat-val" id="stat-time">0.00 ms</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">WASM Module Size</span>
+            <span class="stat-val" id="stat-size">0 KB</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Linear Memory Pages</span>
+            <span class="stat-val" id="stat-pages">0 pages (0 KB)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">WASI Syscalls Made</span>
+            <span class="stat-val" id="stat-syscalls">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Exit Status</span>
+            <span class="stat-val text-success" id="stat-exit">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal Footer Bar -->
+      <div class="terminal-footer">
+        <div class="footer-item">
+          <span class="footer-label">STATUS:</span>
+          <span id="footer-status" class="footer-val text-success">IDLE</span>
+        </div>
+        <div class="footer-item">
+          <span class="footer-label">TIME:</span>
+          <span id="footer-time" class="footer-val">0.0 ms</span>
+        </div>
+        <div class="footer-item">
+          <span class="footer-label">STACK:</span>
+          <span class="footer-val">16 MB</span>
+        </div>
+        <div class="footer-item">
+          <span class="footer-label">POINTER:</span>
+          <span class="footer-val">32-bit</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="wasi_browser.js"></script>
+  <script src="highlighter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

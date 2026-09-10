@@ -1,0 +1,18 @@
+{
+  "name": "nizam-mantiq-wasm-studio",
+  "version": "0.1.0",
+  "description": "In-Browser WebAssembly WASI Studio for Nizam and Mantiq programming languages",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'Static assets ready for deployment'"
+  },
+  "keywords": [
+    "webassembly",
+    "wasi",
+    "compiler",
+    "nizam",
+    "mantiq"
+  ],
+  "license": "MIT"
+}
