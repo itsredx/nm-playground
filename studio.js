@@ -1121,14 +1121,22 @@ async function compileAndRun() {
       return;
     }
 
-    if (resp.status === 503 || resp.status === 504) {
-      appendTerminal(`[Cloud Run] Compiler container is spinning up from scale-to-zero. Please retry in a moment.`, "term-warn");
+    if (resp.status === 502 || resp.status === 503 || resp.status === 504) {
+      appendTerminal(`[Compiler Backend] Service container is spinning up from idle or warming cache. Please retry in a few moments.`, "term-warn");
       footerStatus.textContent = "COLD START";
       footerStatus.className = "footer-val term-warn";
       return;
     }
 
-    const data = await resp.json();
+    let data;
+    try {
+      data = await resp.json();
+    } catch (_) {
+      appendTerminal(`[Compiler Backend] Server returned unexpected response (HTTP ${resp.status}). Retrying in a moment...`, "term-warn");
+      footerStatus.textContent = "RETRY";
+      footerStatus.className = "footer-val term-warn";
+      return;
+    }
     if (!data.success) {
       appendTerminal(`[Compiler Error]`, "term-error");
       appendTerminal(data.error);
