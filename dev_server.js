@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
 
         fs.writeFileSync(fullSrc, code, "utf-8");
 
-        let cmd = `./nizam_wasi.js stage4/nizam.wasm build ${fullSrc} -o ${fullOut} --target wasm32-wasi --lib-dir mantiq`;
+        let cmd = `compiler-service/nizam_wasi.js compiler-service/stage4/nizam.wasm build ${fullSrc} -o ${fullOut} --target wasm32-wasi --lib-dir compiler-service/mantiq`;
         let output = "";
         let compiled = false;
         try {
@@ -61,9 +61,20 @@ const server = http.createServer((req, res) => {
           compiled = fs.existsSync(fullOut);
         } catch (wasmErr) {
           // If stage4 wasm bridge hit an error, fallback to native compiler
-          const nativeCmd = `./mantiq/nizam build ${fullSrc} -o ${fullOut} --target wasm32-wasi`;
+          // NOTE: run from the mantiq/ dir — sema resolves `std.*` modules
+          // relative to the process CWD (`./std/...`, `../std/...`), and the
+          // source file lives in /tmp, so the parent dir would not find it.
+          const nativeCmd = `./nizam build ${fullSrc} -o ${fullOut} --target wasm32-wasi --lib-dir ${PROJECT_DIR}/mantiq`;
           try {
-            output = execSync(nativeCmd, { cwd: PROJECT_DIR, encoding: "utf-8", stdio: "pipe" });
+            console.error(`[native fallback] ${nativeCmd} (cwd=${path.join(PROJECT_DIR, "mantiq")})`);
+            output = execSync(nativeCmd, {
+              cwd: path.join(PROJECT_DIR, "mantiq"),
+              encoding: "utf-8",
+              stdio: "pipe",
+              env: Object.assign({}, process.env, {
+                LD_LIBRARY_PATH: `${PROJECT_DIR}/mantiq` + (process.env.LD_LIBRARY_PATH ? ":" + process.env.LD_LIBRARY_PATH : "")
+              })
+            });
             compiled = fs.existsSync(fullOut);
           } catch (nativeErr) {
             const stdout = (nativeErr.stdout || wasmErr.stdout || "").toString();
